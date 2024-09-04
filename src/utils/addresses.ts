@@ -1,0 +1,1 @@
+export const addresses:number[] = Array.from({length: 16}, (_, index)=>index)

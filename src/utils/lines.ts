@@ -1,0 +1,1 @@
+export const lines: string[] = ["ACLine", "DRLine", "Reg1Line", "Reg2Line", "MemoryLine", "PCLine", "IRLine", "ARLine", "CommonBus", "ReadLine", "WriteLine", "ALUtoACLine", "ACtoALULine","ARtoMemoryLine", "DRtoALULine", "ALUtoOFlag", "ALUtoZFlag","ALUtoNFlag","ALUtoCFlag"]
