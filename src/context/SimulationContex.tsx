@@ -15,7 +15,7 @@ const SimulationContext = createContext<SimulationContextPrpos | null>(null)
 
 export const SimulationProvider:React.FC<{children: React.ReactNode}> = function({children}){
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
-    const [speed, setSpeed] = useState<number>(1.5)
+    const [speed, setSpeed] = useState<number>(1.5);
     const [numBase, setNumBase] = useState<NumberBase>(NumberBase.Binary)
 
 

@@ -1,10 +1,11 @@
 import { CiPlay1, CiPause1 } from "react-icons/ci";
-import React, { useEffect } from "react";
+import React, { useRef } from "react";
 import { useSimulation } from "../context/SimulationContex";
 import { NumberBase } from "../utils/enums";
 import { useCPU } from "../context/CPUContext";
 import { useRAM } from "../context/RAMContext";
 import { useBus } from "../context/BUSContext";
+import { speeds } from "../utils/speeds";
 
 interface NumberBaseOption {
   value: string;
@@ -14,7 +15,7 @@ const interval = 1000; //1sec
 const MAX_MEMORY_ADDRESS = 15;
 
 const Controller: React.FC = function () {
-  const { isPlaying, setIsPlaying, numBase, setNumBase, speed } =
+  const { isPlaying, setIsPlaying, numBase, setNumBase, speed, setSpeed } =
     useSimulation();
   const { setLineStatus } = useBus();
   const numberBaseOptions: NumberBaseOption[] = [
@@ -22,11 +23,12 @@ const Controller: React.FC = function () {
     { value: NumberBase.Hexadecimal, label: "HEX" },
     { value: NumberBase.Decimal, label: "DEC" },
   ];
-  const { PC, IR, setPC, setAR, setIR } = useCPU();
+  const { PC, setPC, setAR, setIR } = useCPU();
   const { addressContents, setAddressContents, setIsMemorySelected } = useRAM();
+  const PCRef = useRef(PC);
 
   const fetch = async function () {
-    if (isPlaying) return;
+    // if (isPlaying) return;
     // if(PC > MAX_MEMORY_ADDRESS) return
     //putting content of PC to CommonBus (activate PC and CommonBus line)
     setLineStatus((prevStatus) => ({
@@ -43,7 +45,7 @@ const Controller: React.FC = function () {
           PCLine: false,
           ARLine: true,
         }));
-        setAR(() => PC);
+        setAR(() => PCRef.current);
         resolve();
       }, interval / speed)
     );
@@ -72,8 +74,14 @@ const Controller: React.FC = function () {
           CommonBus: true,
           IRLine: true,
         }));
-        setIR(parseInt(addressContents[PC], 2));
-        setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
+        setIR(parseInt(addressContents[PCRef.current], 2));
+        // setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
+        // setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
+        setPC((prevPC) => {
+          const newPC = (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1);
+          PCRef.current = newPC; // Update the ref value
+          return newPC;
+        });
         resolve();
       }, interval / speed)
     );
@@ -129,27 +137,55 @@ const Controller: React.FC = function () {
     }
   };
 
-  const decode = function () {
-    console.log(IR);
+  const decode = async function () {
+    const instruction = addressContents[PCRef.current];
+    console.log("from decode function", instruction);
+    if (instruction === "00000000") {
+      console.log("HLT");
+      return true;
+    }
+    if (instruction[0] === "0") {
+      //memory reference
+      const opcode = instruction.slice(1, 4);
+      switch (opcode) {
+        case "000": {
+          console.log("AND");
+        }
+      }
+    } else {
+      console.log("is register reference");
+    }
   };
 
   const handlePlay = async function () {
-    setIsPlaying((prev) => !prev);
-  };
-  const startExecution = async function () {
     if (isPlaying) return;
-    console.log(IR);
-    setIsPlaying((prev) => {
-      return !prev;
-    });
-    await fetch();
-    console.log(IR);
-    decode();
+    setIsPlaying((prev) => !prev);
+    await startExecution();
     setIsPlaying((prev) => !prev);
   };
 
+  const startExecution = async function () {
+    while (true) {
+      await fetch();
+      const halted = await decode();
+      if (PCRef.current === 0 || halted) break;
+    }
+    // setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
+  };
+
   const handleLoadProgram = function () {
-    setAddressContents({ ...addressContents, 10: "10101010" });
+    setAddressContents({
+      ...addressContents,
+      0: "10101010",
+      1: "00110011",
+      2: "11001100",
+      3: "00001111",
+      4: "00000000",
+    });
+  };
+
+  const handleSpeedChange = function (e: React.ChangeEvent<HTMLSelectElement>) {
+    setSpeed(Number(e.target.value));
   };
 
   return (
@@ -160,16 +196,17 @@ const Controller: React.FC = function () {
       >
         {isPlaying ? <CiPause1 size={24} /> : <CiPlay1 size={24} />}
       </button>
-      <button
-        onClick={startExecution}
-        className="border px-3 py-2 rounded-sm text-white"
-      >
-        Start
-      </button>
       <select value={numBase} onChange={hanldleNumberBaseChange}>
         {numberBaseOptions.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
+          </option>
+        ))}
+      </select>
+      <select value={speed} onChange={handleSpeedChange}>
+        {speeds.map((spd) => (
+          <option key={spd} value={spd}>
+            {spd}
           </option>
         ))}
       </select>
