@@ -15,7 +15,8 @@ const Register: React.FC<RegisterPrpos> = function ({ name }) {
       : numBase === NumberBase.Hexadecimal
       ? 16
       : 10;
-  const padBy: number = name === "PC" || name === "AR" ? 4 : 8;
+  const padBy: number =
+    name === "PC" || name === "AR" ? 4 : numberBase === 2 ? 8 : 2;
   const { PC, AC, DR, Reg1, Reg2, AR, IR } = useCPU();
   let value = 0;
   switch (name) {
@@ -53,7 +54,7 @@ const Register: React.FC<RegisterPrpos> = function ({ name }) {
   // console.log(context)
 
   return (
-    <div className="border text-slate-300 flex flex-col p-2 ">
+    <div className="border text-slate-300 flex flex-col p-2 w-[10.45rem] ">
       <span className="text-xs text-center">{name}</span>
       <span className="text-3xl text-center">
         {value.toString(numberBase).toLocaleUpperCase().padStart(padBy, "0")}
