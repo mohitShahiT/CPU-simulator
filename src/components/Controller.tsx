@@ -75,8 +75,6 @@ const Controller: React.FC = function () {
           IRLine: true,
         }));
         setIR(parseInt(addressContents[PCRef.current], 2));
-        // setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
-        // setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
         setPC((prevPC) => {
           const newPC = (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1);
           PCRef.current = newPC; // Update the ref value
@@ -102,25 +100,6 @@ const Controller: React.FC = function () {
       }, interval / speed)
     );
   };
-
-  // useEffect(function () {
-  //   const waitForResume = async () => {
-  //     return new Promise<void>((resolve) => {
-  //       const checkPaused = () => {
-  //       console.log("ue", isPlaying)
-  //         if (isPlaying) {
-  //           resolve();
-  //         } else {
-  //           setTimeout(checkPaused, 100); // Check again after 100ms
-  //         }
-  //       };
-  //       checkPaused();
-  //     });
-  //   };
-  //   if(!isPlaying){
-  //     waitForResume()
-  //   }
-  // }, [isPlaying]);
 
   const hanldleNumberBaseChange = function (
     e: React.ChangeEvent<HTMLSelectElement>
@@ -155,6 +134,7 @@ const Controller: React.FC = function () {
     } else {
       console.log("is register reference");
     }
+    return false;
   };
 
   const handlePlay = async function () {

@@ -1,12 +1,12 @@
 import { useState } from "react"
 
 const Flags:React.FC = function(){
-    const [flags, setFlags] = useState<{[key:string]: boolean}>({
-        O: true,
-        N: false,
-        Z: true,
-        C: true
-    })
+    const [flags] = useState<{ [key: string]: boolean }>({
+      O: true,
+      N: false,
+      Z: true,
+      C: true,
+    });
     return (
       <div className="flex flex-col gap-2 text-white">
         {Object.keys(flags).map(flag=>(
