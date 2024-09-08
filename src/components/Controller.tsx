@@ -82,6 +82,18 @@ const execute = function (operation: string) {
   }
 };
 
+const createAsyncStep = function (
+  fn: () => void,
+  stepDelay: number
+): Promise<void> {
+  return new Promise<void>((resolve: () => void) => {
+    setTimeout(() => {
+      fn();
+      resolve();
+    }, stepDelay);
+  });
+};
+
 const Controller: React.FC = function () {
   const { isPlaying, setIsPlaying, numBase, setNumBase, speed, setSpeed } =
     useSimulation();
@@ -94,6 +106,7 @@ const Controller: React.FC = function () {
   const { PC, setPC, setAR, setIR } = useCPU();
   const { addressContents, setAddressContents, setIsMemorySelected } = useRAM();
   const PCRef = useRef(PC);
+  const delay = interval / speed;
 
   const fetch = async function () {
     setLineStatus((prevStatus) => ({
@@ -103,67 +116,55 @@ const Controller: React.FC = function () {
     }));
 
     //get the content of CommonBus to AR
-    await new Promise<void>((resolve) =>
-      setTimeout(() => {
-        setLineStatus((prevStatus) => ({
-          ...prevStatus,
-          PCLine: false,
-          ARLine: true,
-        }));
-        setAR(() => PCRef.current);
-        resolve();
-      }, interval / speed)
-    );
+    await createAsyncStep(() => {
+      setLineStatus((prevStatus) => ({
+        ...prevStatus,
+        PCLine: false,
+        ARLine: true,
+      }));
+      setAR(() => PCRef.current);
+    }, delay);
 
     // activate the AR to memory line to select the memory cell
-    await new Promise<void>((resolve) =>
-      setTimeout(() => {
-        setIsMemorySelected(true);
-        setLineStatus((prevStatus) => ({
-          ...prevStatus,
-          ARLine: false,
-          ARtoMemoryLine: true,
-          CommonBus: false,
-        }));
-        resolve();
-      }, interval / speed)
-    );
+    await createAsyncStep(() => {
+      setIsMemorySelected(true);
+      setLineStatus((prevStatus) => ({
+        ...prevStatus,
+        ARLine: false,
+        ARtoMemoryLine: true,
+        CommonBus: false,
+      }));
+    }, delay);
 
     // activate the read enable line and put the content of the memory cell to CommonBus
-    await new Promise<void>((resolve) =>
-      setTimeout(() => {
-        setLineStatus((prevStatus) => ({
-          ...prevStatus,
-          ReadLine: true,
-          MemoryLine: true,
-          CommonBus: true,
-          IRLine: true,
-        }));
-        setIR(parseInt(addressContents[PCRef.current], 2));
-        setPC((prevPC) => {
-          const newPC = (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1);
-          PCRef.current = newPC; // Update the ref value
-          return newPC;
-        });
-        resolve();
-      }, interval / speed)
-    );
+    await createAsyncStep(() => {
+      setLineStatus((prevStatus) => ({
+        ...prevStatus,
+        ReadLine: true,
+        MemoryLine: true,
+        CommonBus: true,
+        IRLine: true,
+      }));
+      setIR(parseInt(addressContents[PCRef.current], 2));
+      setPC((prevPC) => {
+        const newPC = (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1);
+        PCRef.current = newPC; // Update the ref value
+        return newPC;
+      });
+    }, delay);
 
     // deactivate all the lines
-    await new Promise<void>((resolve) =>
-      setTimeout(() => {
-        setIsMemorySelected(false);
-        setLineStatus((prevStatus) => ({
-          ...prevStatus,
-          ReadLine: false,
-          MemoryLine: false,
-          CommonBus: false,
-          IRLine: false,
-          ARtoMemoryLine: false,
-        }));
-        resolve();
-      }, interval / speed)
-    );
+    await createAsyncStep(() => {
+      setIsMemorySelected(false);
+      setLineStatus((prevStatus) => ({
+        ...prevStatus,
+        ReadLine: false,
+        MemoryLine: false,
+        CommonBus: false,
+        IRLine: false,
+        ARtoMemoryLine: false,
+      }));
+    }, delay);
   };
 
   const hanldleNumberBaseChange = function (
@@ -184,6 +185,34 @@ const Controller: React.FC = function () {
   const decode = async function (): Promise<string> {
     const instruction = addressContents[PCRef.current - 1]; //upto this point pc is already incremented and ponting to the next instruction
     const opcode = instruction.slice(0, 4);
+    const address = instruction.slice(4);
+
+    // await createAsyncStep(() => {
+    setLineStatus((prevStatus) => ({
+      ...prevStatus,
+      CommonBus: true,
+      IRLine: true,
+    }));
+    // }, delay);
+
+    await createAsyncStep(() => {
+      setAR(parseInt(address, 2));
+      setLineStatus((prevStatus) => ({
+        ...prevStatus,
+        CommonBus: true,
+        IRLine: false,
+        ARLine: true,
+      }));
+    }, delay);
+
+    await createAsyncStep(() => {
+      setLineStatus((prevStatus) => ({
+        ...prevStatus,
+        CommonBus: false,
+        ARLine: false,
+      }));
+    }, delay);
+
     if (instruction[0] === "0") {
       //memory reference
       console.log("is memory reference");
@@ -208,7 +237,7 @@ const Controller: React.FC = function () {
       if (PCRef.current === 0 || operation === "HLT") break;
       execute(operation);
     }
-    // setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
+    setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
   };
 
   const handleLoadProgram = function () {
@@ -249,6 +278,7 @@ const Controller: React.FC = function () {
         ))}
       </select>
       <button
+        disabled={isPlaying}
         onClick={handleLoadProgram}
         className="border px-3 py-2 rounded-sm text-white"
       >
