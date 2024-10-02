@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from "react";
 import { lines } from "../utils/lines";
-interface LineStatus {
-    [key:string]: boolean
+export interface LineStatus {
+  [key: string]: boolean;
 }
 
 interface BusProviderProps {

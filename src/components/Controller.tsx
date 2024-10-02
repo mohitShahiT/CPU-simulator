@@ -7,6 +7,7 @@ import { useRAM } from "../context/RAMContext";
 import { useBus } from "../context/BUSContext";
 import { speeds } from "../utils/speeds";
 import { opcodes } from "../utils/opcode";
+import { LineStatus } from "../context/BUSContext";
 interface NumberBaseOption {
   value: string;
   label: string;
@@ -14,10 +15,50 @@ interface NumberBaseOption {
 const interval = 1000; //1sec
 const MAX_MEMORY_ADDRESS = 15;
 
-const execute = function (operation: string) {
+const execute = async function (
+  operation: string,
+  setLineStatus: (setterFn: (prev: LineStatus) => LineStatus) => void,
+  setIsMemorySelected: (val: boolean) => void,
+  delay: number
+) {
   switch (operation) {
     case "ADD": {
       console.log("AND");
+      //do and operation here
+      // DR <- M[AR]
+      // AC <- AC ^ DR
+
+      // set the selecte the memory thorugn AR
+      await createAsyncStep(() => {
+        setIsMemorySelected(true);
+        setLineStatus((prevStatus) => ({
+          ...prevStatus,
+          ARtoMemoryLine: true,
+          // ReadLine: true,
+        }));
+      }, delay);
+
+      // read the memory from selected memroy to common bus
+      await createAsyncStep(() => {
+        setLineStatus((prevStatus) => ({
+          ...prevStatus,
+          ARtoMemoryLine: true,
+          ReadLine: true,
+          CommonBus: true,
+          MemoryLine: true,
+        }));
+      }, delay);
+      //
+      await createAsyncStep(() => {
+        setLineStatus((prevStatus) => ({
+          ...prevStatus,
+          ARtoMemoryLine: true,
+          ReadLine: true,
+          CommonBus: true,
+          MemoryLine: true,
+        }));
+      }, delay);
+
       break;
     }
     case "AND": {
@@ -231,20 +272,20 @@ const Controller: React.FC = function () {
   };
 
   const startExecution = async function () {
-    while (true) {
-      await fetch();
-      const operation = await decode();
-      if (PCRef.current === 0 || operation === "HLT") break;
-      execute(operation);
-    }
+    // while (true) {
+    await fetch();
+    const operation = await decode();
+    // if (PCRef.current === 0 || operation === "HLT") break;
+    execute(operation, setLineStatus, setIsMemorySelected, delay);
+    // }
     setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
   };
 
   const handleLoadProgram = function () {
     setAddressContents({
       ...addressContents,
-      0: "00101010",
-      1: "10110011",
+      0: "00001010",
+      1: "11110000",
       2: "01001100",
       3: "11011111",
       4: "11110000",
