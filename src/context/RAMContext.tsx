@@ -14,10 +14,19 @@ interface RAMContextProps {
 
 const RAMContexet = createContext<RAMContextProps | null>(null)
 
-const initialAddressContents = addresses.reduce((acc, curr)=> {
-    acc[curr] = "00000010"
-    return acc
-}, {} as AddressContents)
+const initialAddressContentsDummy = addresses.reduce((acc, curr) => {
+  acc[curr] = "00000010";
+  return acc;
+}, {} as AddressContents);
+
+const initialAddressContents = {
+  ...initialAddressContentsDummy,
+  0: "00001010",
+  1: "11110000",
+  2: "01001100",
+  3: "11011111",
+  4: "11110000",
+};
 
 export const RAMProvider:React.FC<{children: React.ReactNode}> = function({ children }){
     const [addressContents, setAddressContents] = useState< AddressContents >(initialAddressContents)
