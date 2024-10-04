@@ -7,121 +7,12 @@ import { useRAM } from "../context/RAMContext";
 import { useBus } from "../context/BUSContext";
 import { speeds } from "../utils/speeds";
 import { opcodes } from "../utils/opcode";
-import { LineStatus } from "../context/BUSContext";
 interface NumberBaseOption {
   value: string;
   label: string;
 }
 const interval = 1000; //1sec
 const MAX_MEMORY_ADDRESS = 15;
-
-const execute = async function (
-  operation: string,
-  setLineStatus: (setterFn: (prev: LineStatus) => LineStatus) => void,
-  setIsMemorySelected: (val: boolean) => void,
-  delay: number
-) {
-  switch (operation) {
-    case "ADD": {
-      console.log("AND");
-      //do and operation here
-      // DR <- M[AR]
-      // AC <- AC ^ DR
-
-      // set the selecte the memory thorugn AR
-      await createAsyncStep(() => {
-        setIsMemorySelected(true);
-        setLineStatus((prevStatus) => ({
-          ...prevStatus,
-          ARtoMemoryLine: true,
-          // ReadLine: true,
-        }));
-      }, delay);
-
-      // read the memory from selected memroy to common bus
-      await createAsyncStep(() => {
-        setLineStatus((prevStatus) => ({
-          ...prevStatus,
-          ARtoMemoryLine: true,
-          ReadLine: true,
-          CommonBus: true,
-          MemoryLine: true,
-        }));
-      }, delay);
-      //
-      await createAsyncStep(() => {
-        setLineStatus((prevStatus) => ({
-          ...prevStatus,
-          ARtoMemoryLine: true,
-          ReadLine: true,
-          CommonBus: true,
-          MemoryLine: true,
-        }));
-      }, delay);
-
-      break;
-    }
-    case "AND": {
-      console.log("AND");
-      break;
-    }
-    case "LDA": {
-      console.log("LDA");
-      break;
-    }
-    case "STA": {
-      console.log("STA");
-      break;
-    }
-    case "BUN": {
-      console.log("BUN");
-      break;
-    }
-    case "BSA": {
-      console.log("BSA");
-      break;
-    }
-    case "ISZ": {
-      console.log("ISZ");
-      break;
-    }
-    case "CLA": {
-      console.log("CLA");
-      break;
-    }
-    case "CMA": {
-      console.log("CMA");
-      break;
-    }
-    case "INC": {
-      console.log("INC");
-      break;
-    }
-    case "DEC": {
-      console.log("DEC");
-      break;
-    }
-    case "SPA": {
-      console.log("SPA");
-      break;
-    }
-    case "SNA": {
-      console.log("SNA");
-      break;
-    }
-    case "SZA": {
-      console.log("SZA");
-      break;
-    }
-    case "HLT": {
-      console.log("HLT");
-      break;
-    }
-    default: {
-      console.log("Unknown opcode");
-    }
-  }
-};
 
 const createAsyncStep = function (
   fn: () => void,
@@ -144,9 +35,10 @@ const Controller: React.FC = function () {
     { value: NumberBase.Hexadecimal, label: "HEX" },
     { value: NumberBase.Decimal, label: "DEC" },
   ];
-  const { PC, setPC, setAR, setIR } = useCPU();
+  const { PC, AR, setOperation, setPC, setAR, setIR, setDR } = useCPU();
   const { addressContents, setAddressContents, setIsMemorySelected } = useRAM();
   const PCRef = useRef(PC);
+  const ARRef = useRef(AR);
   const delay = interval / speed;
 
   const fetch = async function () {
@@ -163,6 +55,7 @@ const Controller: React.FC = function () {
         PCLine: false,
         ARLine: true,
       }));
+      ARRef.current = PCRef.current;
       setAR(() => PCRef.current);
     }, delay);
 
@@ -237,7 +130,8 @@ const Controller: React.FC = function () {
     // }, delay);
 
     await createAsyncStep(() => {
-      setAR(parseInt(address, 2));
+      ARRef.current = parseInt(address, 2);
+      setAR(ARRef.current);
       setLineStatus((prevStatus) => ({
         ...prevStatus,
         CommonBus: true,
@@ -271,12 +165,136 @@ const Controller: React.FC = function () {
     setIsPlaying((prev) => !prev);
   };
 
+  const execute = async function (
+    operation: string
+    // setLineStatus: (setterFn: (prev: LineStatus) => LineStatus) => void,
+    // setIsMemorySelected: (val: boolean) => void,
+    // setIR: (val: number) => void,
+    // delay: number
+  ) {
+    switch (operation) {
+      case "ADD": {
+        console.log("AND");
+        //do and operation here
+        // DR <- M[AR]
+        // AC <- AC ^ DR
+
+        // set the selecte the memory thorugn AR
+        await createAsyncStep(() => {
+          setIsMemorySelected(true);
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARtoMemoryLine: true,
+            // ReadLine: true,
+          }));
+        }, delay);
+
+        // read the memory from selected memroy to common bus
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARtoMemoryLine: true,
+            ReadLine: true,
+            CommonBus: true,
+            MemoryLine: true,
+            DRLine: true,
+          }));
+          setDR(parseInt(addressContents[ARRef.current], 2));
+        }, delay);
+
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARtoMemoryLine: false,
+            ReadLine: false,
+            CommonBus: false,
+            MemoryLine: false,
+            DRLine: false,
+            ACtoALULine: true,
+            DRtoALULine: true,
+          }));
+          setOperation("AND");
+          //do and operation and update AC
+        }, delay);
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ACtoALULine: false,
+            DRtoALULine: false,
+          }));
+          setOperation("");
+        }, delay);
+
+        break;
+      }
+      case "AND": {
+        console.log("AND");
+        break;
+      }
+      case "LDA": {
+        console.log("LDA");
+        break;
+      }
+      case "STA": {
+        console.log("STA");
+        break;
+      }
+      case "BUN": {
+        console.log("BUN");
+        break;
+      }
+      case "BSA": {
+        console.log("BSA");
+        break;
+      }
+      case "ISZ": {
+        console.log("ISZ");
+        break;
+      }
+      case "CLA": {
+        console.log("CLA");
+        break;
+      }
+      case "CMA": {
+        console.log("CMA");
+        break;
+      }
+      case "INC": {
+        console.log("INC");
+        break;
+      }
+      case "DEC": {
+        console.log("DEC");
+        break;
+      }
+      case "SPA": {
+        console.log("SPA");
+        break;
+      }
+      case "SNA": {
+        console.log("SNA");
+        break;
+      }
+      case "SZA": {
+        console.log("SZA");
+        break;
+      }
+      case "HLT": {
+        console.log("HLT");
+        break;
+      }
+      default: {
+        console.log("Unknown opcode");
+      }
+    }
+  };
+
   const startExecution = async function () {
     // while (true) {
     await fetch();
     const operation = await decode();
     // if (PCRef.current === 0 || operation === "HLT") break;
-    execute(operation, setLineStatus, setIsMemorySelected, delay);
+    execute(operation);
     // }
     setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
   };
