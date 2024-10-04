@@ -35,10 +35,13 @@ const Controller: React.FC = function () {
     { value: NumberBase.Hexadecimal, label: "HEX" },
     { value: NumberBase.Decimal, label: "DEC" },
   ];
-  const { PC, AR, setOperation, setPC, setAR, setIR, setDR } = useCPU();
+  const { PC, AC, AR, DR, setOperation, setPC, setAR, setIR, setDR, setAC } =
+    useCPU();
   const { addressContents, setAddressContents, setIsMemorySelected } = useRAM();
   const PCRef = useRef(PC);
   const ARRef = useRef(AR);
+  const DRRef = useRef(DR);
+  const ACRef = useRef(AC);
   const delay = interval / speed;
 
   const fetch = async function () {
@@ -172,63 +175,81 @@ const Controller: React.FC = function () {
     // setIR: (val: number) => void,
     // delay: number
   ) {
+    const execOperation = async function (
+      operation: string,
+      executeFn: () => void
+    ) {
+      //do and operation here
+      // DR <- M[AR]
+      // AC <- AC ^ DR
+
+      // set the selecte the memory thorugn AR
+      await createAsyncStep(() => {
+        setIsMemorySelected(true);
+        setLineStatus((prevStatus) => ({
+          ...prevStatus,
+          ARtoMemoryLine: true,
+          // ReadLine: true,
+        }));
+      }, delay);
+
+      // read the memory from selected memroy to common bus
+      await createAsyncStep(() => {
+        setLineStatus((prevStatus) => ({
+          ...prevStatus,
+          ARtoMemoryLine: true,
+          ReadLine: true,
+          CommonBus: true,
+          MemoryLine: true,
+          DRLine: true,
+        }));
+        DRRef.current = parseInt(addressContents[ARRef.current], 2);
+        setDR(DRRef.current);
+      }, delay);
+
+      await createAsyncStep(() => {
+        setIsMemorySelected(false);
+        setLineStatus((prevStatus) => ({
+          ...prevStatus,
+          ARtoMemoryLine: false,
+          ReadLine: false,
+          CommonBus: false,
+          MemoryLine: false,
+          DRLine: false,
+          ACtoALULine: true,
+          DRtoALULine: true,
+          ALUtoACLine: true,
+        }));
+        setOperation(operation);
+        //do and operation and update AC
+        // ACRef.current = DRRef.current & ACRef.current;
+        executeFn();
+        setAC(ACRef.current);
+      }, delay);
+      await createAsyncStep(() => {
+        setLineStatus((prevStatus) => ({
+          ...prevStatus,
+          ACtoALULine: false,
+          DRtoALULine: false,
+          ALUtoACLine: false,
+        }));
+        setOperation("");
+      }, delay);
+    };
+
     switch (operation) {
       case "ADD": {
-        console.log("AND");
-        //do and operation here
-        // DR <- M[AR]
-        // AC <- AC ^ DR
-
-        // set the selecte the memory thorugn AR
-        await createAsyncStep(() => {
-          setIsMemorySelected(true);
-          setLineStatus((prevStatus) => ({
-            ...prevStatus,
-            ARtoMemoryLine: true,
-            // ReadLine: true,
-          }));
-        }, delay);
-
-        // read the memory from selected memroy to common bus
-        await createAsyncStep(() => {
-          setLineStatus((prevStatus) => ({
-            ...prevStatus,
-            ARtoMemoryLine: true,
-            ReadLine: true,
-            CommonBus: true,
-            MemoryLine: true,
-            DRLine: true,
-          }));
-          setDR(parseInt(addressContents[ARRef.current], 2));
-        }, delay);
-
-        await createAsyncStep(() => {
-          setLineStatus((prevStatus) => ({
-            ...prevStatus,
-            ARtoMemoryLine: false,
-            ReadLine: false,
-            CommonBus: false,
-            MemoryLine: false,
-            DRLine: false,
-            ACtoALULine: true,
-            DRtoALULine: true,
-          }));
-          setOperation("AND");
-          //do and operation and update AC
-        }, delay);
-        await createAsyncStep(() => {
-          setLineStatus((prevStatus) => ({
-            ...prevStatus,
-            ACtoALULine: false,
-            DRtoALULine: false,
-          }));
-          setOperation("");
-        }, delay);
-
+        console.log("ADD");
+        execOperation(operation, () => {
+          ACRef.current = DRRef.current + ACRef.current;
+        });
         break;
       }
       case "AND": {
         console.log("AND");
+        execOperation(operation, () => {
+          ACRef.current = DRRef.current & ACRef.current;
+        });
         break;
       }
       case "LDA": {
@@ -302,7 +323,7 @@ const Controller: React.FC = function () {
   const handleLoadProgram = function () {
     setAddressContents({
       ...addressContents,
-      0: "00001010",
+      0: "00011010",
       1: "11110000",
       2: "01001100",
       3: "11011111",

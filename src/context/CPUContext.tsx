@@ -27,7 +27,7 @@ const CPUContext = createContext<CPUContxtPrpos | null>(null);
 
 export const CPUProvider: React.FC<CPUProviderProps> = function ({ children }) {
   const [PC, setPC] = useState<number>(0);
-  const [AC, setAC] = useState<number>(0);
+  const [AC, setAC] = useState<number>(3);
   const [DR, setDR] = useState<number>(0);
   const [Reg1, setReg1] = useState<number>(0);
   const [Reg2, setReg2] = useState<number>(0);
