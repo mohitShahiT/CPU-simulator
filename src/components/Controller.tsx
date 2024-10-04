@@ -175,7 +175,7 @@ const Controller: React.FC = function () {
     // setIR: (val: number) => void,
     // delay: number
   ) {
-    const execOperation = async function (
+    const memoryToCPUOpearation = async function (
       operation: string,
       executeFn: () => void
     ) {
@@ -239,7 +239,7 @@ const Controller: React.FC = function () {
     switch (operation) {
       case "ADD": {
         console.log("ADD");
-        execOperation(operation, () => {
+        memoryToCPUOpearation(operation, () => {
           ACRef.current = DRRef.current + ACRef.current;
           setAC(ACRef.current);
         });
@@ -247,14 +247,14 @@ const Controller: React.FC = function () {
       }
       case "AND": {
         console.log("AND");
-        execOperation(operation, () => {
+        memoryToCPUOpearation(operation, () => {
           ACRef.current = DRRef.current & ACRef.current;
           setAC(ACRef.current);
         });
         break;
       }
       case "LDA": {
-        execOperation(operation, () => {
+        memoryToCPUOpearation(operation, () => {
           setLineStatus((prevStatus) => ({
             ...prevStatus,
             ACtoALULine: false,
@@ -265,7 +265,36 @@ const Controller: React.FC = function () {
         break;
       }
       case "STA": {
-        console.log("STA");
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ACLine: true,
+            CommonBus: true,
+            MemoryLine: true,
+          }));
+        }, delay);
+        await createAsyncStep(() => {
+          setIsMemorySelected(true);
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            WriteLine: true,
+          }));
+          setAddressContents({
+            ...addressContents,
+            [ARRef.current]: ACRef.current.toString(2).padStart(8, "0"),
+          });
+        }, delay);
+        await createAsyncStep(() => {
+          setIsMemorySelected(true);
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            WriteLine: false,
+            ACLine: false,
+            CommonBus: false,
+            MemoryLine: false,
+          }));
+          setIsMemorySelected(false);
+        }, delay);
         break;
       }
       case "BUN": {
