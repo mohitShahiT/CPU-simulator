@@ -224,7 +224,6 @@ const Controller: React.FC = function () {
         //do and operation and update AC
         // ACRef.current = DRRef.current & ACRef.current;
         executeFn();
-        setAC(ACRef.current);
       }, delay);
       await createAsyncStep(() => {
         setLineStatus((prevStatus) => ({
@@ -242,6 +241,7 @@ const Controller: React.FC = function () {
         console.log("ADD");
         execOperation(operation, () => {
           ACRef.current = DRRef.current + ACRef.current;
+          setAC(ACRef.current);
         });
         break;
       }
@@ -249,11 +249,19 @@ const Controller: React.FC = function () {
         console.log("AND");
         execOperation(operation, () => {
           ACRef.current = DRRef.current & ACRef.current;
+          setAC(ACRef.current);
         });
         break;
       }
       case "LDA": {
-        console.log("LDA");
+        execOperation(operation, () => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ACtoALULine: false,
+          }));
+          ACRef.current = DRRef.current;
+          setAC(ACRef.current);
+        });
         break;
       }
       case "STA": {

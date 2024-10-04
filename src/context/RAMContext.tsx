@@ -21,7 +21,7 @@ const initialAddressContentsDummy = addresses.reduce((acc, curr) => {
 
 const initialAddressContents = {
   ...initialAddressContentsDummy,
-  0: "00001010",
+  0: "00100001",
   1: "11110000",
   2: "01001100",
   3: "11011111",
