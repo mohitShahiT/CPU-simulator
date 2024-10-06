@@ -298,7 +298,36 @@ const Controller: React.FC = function () {
         break;
       }
       case "BUN": {
+        //branch unconditionallt
         console.log("BUN");
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARLine: true,
+            CommonBus: true,
+          }));
+        }, delay);
+
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            PCLine: true,
+          }));
+          PCRef.current = ARRef.current;
+          setPC(PCRef.current);
+        }, delay);
+
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            PCLine: false,
+            CommonBus: false,
+            ARLine: false,
+          }));
+          PCRef.current = ARRef.current;
+          setPC(PCRef.current);
+        }, delay);
+
         break;
       }
       case "BSA": {
@@ -348,12 +377,12 @@ const Controller: React.FC = function () {
   };
 
   const startExecution = async function () {
-    // while (true) {
-    await fetch();
-    const operation = await decode();
-    // if (PCRef.current === 0 || operation === "HLT") break;
-    execute(operation);
-    // }
+    while (true) {
+      await fetch();
+      const operation = await decode();
+      if (PCRef.current === 0 || operation === "HLT") break;
+      await execute(operation);
+    }
     setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
   };
 
