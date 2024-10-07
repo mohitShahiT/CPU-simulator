@@ -83,11 +83,13 @@ const Controller: React.FC = function () {
         IRLine: true,
       }));
       setIR(parseInt(addressContents[PCRef.current], 2));
-      setPC((prevPC) => {
-        const newPC = (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1);
-        PCRef.current = newPC; // Update the ref value
-        return newPC;
-      });
+      PCRef.current = (PCRef.current + 1) % (MAX_MEMORY_ADDRESS + 1); // Update the ref value
+      // setPC((prevPC) => {
+      //   const newPC = (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1);
+      //   PCRef.current = newPC; // Update the ref value
+      //   return newPC;
+      // });
+      setPC(PCRef.current);
     }, delay);
 
     // deactivate all the lines
@@ -285,7 +287,6 @@ const Controller: React.FC = function () {
           });
         }, delay);
         await createAsyncStep(() => {
-          setIsMemorySelected(true);
           setLineStatus((prevStatus) => ({
             ...prevStatus,
             WriteLine: false,
@@ -332,6 +333,71 @@ const Controller: React.FC = function () {
       }
       case "BSA": {
         console.log("BSA");
+        await createAsyncStep(() => {
+          setIsMemorySelected(true);
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARtoMemoryLine: true,
+          }));
+        }, delay);
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            PCLine: true,
+            CommonBus: true,
+          }));
+        }, delay);
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            WriteLine: true,
+            CommonBus: true,
+            MemoryLine: true,
+          }));
+          setAddressContents({
+            ...addressContents,
+            [ARRef.current]: PCRef.current.toString(2).padStart(8, "0"),
+          });
+        }, delay);
+        await createAsyncStep(() => {
+          setIsMemorySelected(false);
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            WriteLine: false,
+            CommonBus: false,
+            MemoryLine: false,
+            PCLine: false,
+            ARtoMemoryLine: false,
+          }));
+          ARRef.current++;
+          setAR(ARRef.current);
+        }, delay);
+
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARLine: true,
+            CommonBus: true,
+          }));
+        }, delay);
+
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            PCLine: true,
+          }));
+          PCRef.current = ARRef.current;
+          setPC(PCRef.current);
+        }, delay);
+
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARLine: false,
+            CommonBus: false,
+            PCLine: false,
+          }));
+        }, delay);
         break;
       }
       case "ISZ": {
@@ -377,13 +443,13 @@ const Controller: React.FC = function () {
   };
 
   const startExecution = async function () {
-    while (true) {
-      await fetch();
-      const operation = await decode();
-      if (PCRef.current === 0 || operation === "HLT") break;
-      await execute(operation);
-    }
-    setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
+    // while (true) {
+    await fetch();
+    const operation = await decode();
+    // if (PCRef.current === 0 || operation === "HLT") break;
+    await execute(operation);
+    // }
+    // setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
   };
 
   const handleLoadProgram = function () {
