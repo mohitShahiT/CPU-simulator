@@ -402,6 +402,86 @@ const Controller: React.FC = function () {
       }
       case "ISZ": {
         console.log("ISZ");
+        await createAsyncStep(() => {
+          setIsMemorySelected(true);
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARtoMemoryLine: true,
+            // ReadLine: true,
+          }));
+        }, delay);
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ReadLine: true,
+            CommonBus: true,
+            MemoryLine: true,
+            DRLine: true,
+          }));
+          DRRef.current = parseInt(addressContents[ARRef.current], 2);
+          setDR(DRRef.current);
+        }, delay);
+        await createAsyncStep(() => {
+          setIsMemorySelected(false);
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARtoMemoryLine: false,
+            ReadLine: false,
+            CommonBus: false,
+            MemoryLine: false,
+            DRLine: false,
+          }));
+          DRRef.current = parseInt(addressContents[ARRef.current], 2);
+          setDR(DRRef.current);
+        }, delay);
+        await createAsyncStep(() => {
+          DRRef.current = (DRRef.current + 1) % 256;
+          setDR(DRRef.current);
+        }, delay);
+        await createAsyncStep(() => {
+          setIsMemorySelected(true);
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARtoMemoryLine: true,
+          }));
+        }, delay);
+        await createAsyncStep(() => {
+          setIsMemorySelected(true);
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            DRLine: true,
+            CommonBus: true,
+            MemoryLine: true,
+            WriteLine: true,
+          }));
+          setAddressContents({
+            ...addressContents,
+            [ARRef.current]: DRRef.current.toString(2).padStart(8, "0"),
+          });
+        }, delay);
+        await createAsyncStep(() => {
+          setIsMemorySelected(false);
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARtoMemoryLine: false,
+            DRLine: false,
+            CommonBus: false,
+            MemoryLine: false,
+            WriteLine: false,
+          }));
+          setAddressContents({
+            ...addressContents,
+            [ARRef.current]: DRRef.current.toString(2).padStart(8, "0"),
+          });
+        }, delay);
+
+        if (DRRef.current === 0) {
+          await createAsyncStep(() => {
+            PCRef.current++;
+            setPC(PCRef.current);
+          }, delay);
+        }
+
         break;
       }
       case "CLA": {
