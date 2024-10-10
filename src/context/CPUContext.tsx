@@ -4,6 +4,10 @@ interface CPUProviderProps {
   children: React.ReactNode;
 }
 
+interface FlagInterface {
+  [key: string]: boolean;
+}
+
 interface CPUContxtPrpos {
   PC: number;
   AC: number;
@@ -13,6 +17,7 @@ interface CPUContxtPrpos {
   IR: number;
   AR: number;
   operation: string;
+  flags: FlagInterface;
   setPC: (value: number | ((prevValue: number) => number)) => void;
   setAC: (value: number) => void;
   setDR: (value: number) => void;
@@ -21,6 +26,7 @@ interface CPUContxtPrpos {
   setIR: (value: number) => void;
   setAR: (value: number | ((prevValue: number) => number)) => void;
   setOperation: (value: string) => void;
+  setFlags: (updater: (prev: FlagInterface) => FlagInterface) => void;
 }
 
 const CPUContext = createContext<CPUContxtPrpos | null>(null);
@@ -34,6 +40,12 @@ export const CPUProvider: React.FC<CPUProviderProps> = function ({ children }) {
   const [AR, setAR] = useState<number>(0);
   const [IR, setIR] = useState<number>(0);
   const [operation, setOperation] = useState<string>("");
+  const [flags, setFlags] = useState<{ [key: string]: boolean }>({
+    O: false,
+    N: false,
+    Z: false,
+    C: false,
+  });
 
   return (
     <CPUContext.Provider
@@ -46,6 +58,7 @@ export const CPUProvider: React.FC<CPUProviderProps> = function ({ children }) {
         AR,
         IR,
         operation,
+        flags,
         setPC,
         setAC,
         setDR,
@@ -54,6 +67,7 @@ export const CPUProvider: React.FC<CPUProviderProps> = function ({ children }) {
         setAR,
         setIR,
         setOperation,
+        setFlags,
       }}
     >
       {children}

@@ -35,8 +35,19 @@ const Controller: React.FC = function () {
     { value: NumberBase.Hexadecimal, label: "HEX" },
     { value: NumberBase.Decimal, label: "DEC" },
   ];
-  const { PC, AC, AR, DR, setOperation, setPC, setAR, setIR, setDR, setAC } =
-    useCPU();
+  const {
+    PC,
+    AC,
+    AR,
+    DR,
+    setOperation,
+    setPC,
+    setAR,
+    setIR,
+    setDR,
+    setAC,
+    setFlags,
+  } = useCPU();
   const { addressContents, setAddressContents, setIsMemorySelected } = useRAM();
   const PCRef = useRef(PC);
   const ARRef = useRef(AR);
@@ -242,8 +253,20 @@ const Controller: React.FC = function () {
       case "ADD": {
         console.log("ADD");
         memoryToCPUOpearation(operation, () => {
-          ACRef.current = DRRef.current + ACRef.current;
+          let result = DRRef.current + ACRef.current;
+          if (result > 255) {
+            // Overflow detected
+            setFlags((prev) => ({
+              ...prev,
+              O: true,
+            }));
+          }
+          result = result & 0xff; // Masking the result to fit 8 bits
+          ACRef.current = result;
           setAC(ACRef.current);
+
+          // ACRef.current = DRRef.current + ACRef.current;
+          // setAC(ACRef.current);
         });
         break;
       }
