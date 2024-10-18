@@ -137,36 +137,35 @@ const Controller: React.FC = function () {
     const opcode = instruction.slice(0, 4);
     const address = instruction.slice(4);
 
-    // await createAsyncStep(() => {
-    setLineStatus((prevStatus) => ({
-      ...prevStatus,
-      CommonBus: true,
-      IRLine: true,
-    }));
-    // }, delay);
-
-    await createAsyncStep(() => {
-      ARRef.current = parseInt(address, 2);
-      setAR(ARRef.current);
-      setLineStatus((prevStatus) => ({
-        ...prevStatus,
-        CommonBus: true,
-        IRLine: false,
-        ARLine: true,
-      }));
-    }, delay);
-
-    await createAsyncStep(() => {
-      setLineStatus((prevStatus) => ({
-        ...prevStatus,
-        CommonBus: false,
-        ARLine: false,
-      }));
-    }, delay);
-
     if (instruction[0] === "0") {
       //memory reference
       console.log("is memory reference");
+      // await createAsyncStep(() => {
+      setLineStatus((prevStatus) => ({
+        ...prevStatus,
+        CommonBus: true,
+        IRLine: true,
+      }));
+      // }, delay);
+
+      await createAsyncStep(() => {
+        ARRef.current = parseInt(address, 2);
+        setAR(ARRef.current);
+        setLineStatus((prevStatus) => ({
+          ...prevStatus,
+          CommonBus: true,
+          IRLine: false,
+          ARLine: true,
+        }));
+      }, delay);
+
+      await createAsyncStep(() => {
+        setLineStatus((prevStatus) => ({
+          ...prevStatus,
+          CommonBus: false,
+          ARLine: false,
+        }));
+      }, delay);
     } else {
       //register reference
       console.log("is register reference");
@@ -509,6 +508,13 @@ const Controller: React.FC = function () {
       }
       case "CLA": {
         console.log("CLA");
+        await createAsyncStep(() => {
+          setLineStatus((prevStatus) => ({
+            ...prevStatus,
+            ARtoMemoryLine: true,
+            // ReadLine: true,
+          }));
+        }, delay);
         break;
       }
       case "CMA": {

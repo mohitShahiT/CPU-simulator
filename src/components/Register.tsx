@@ -4,10 +4,11 @@ import { NumberBase } from "../utils/enums";
 
 interface RegisterPrpos {
   name: string;
+  active: boolean;
   value?: string | number;
 }
 
-const Register: React.FC<RegisterPrpos> = function ({ name }) {
+const Register: React.FC<RegisterPrpos> = function ({ name, active }) {
   const { numBase } = useSimulation();
   const numberBase: number =
     numBase === NumberBase.Binary
@@ -54,7 +55,11 @@ const Register: React.FC<RegisterPrpos> = function ({ name }) {
   // console.log(context)
 
   return (
-    <div className="border text-slate-300 flex flex-col p-2 w-[10.45rem] ">
+    <div
+      className={`border text-slate-300 flex flex-col p-2 w-[10.45rem] ${
+        active && "border-yellow-400"
+      } `}
+    >
       <span className="text-xs text-center">{name}</span>
       <span className="text-3xl text-center">
         {value.toString(numberBase).toLocaleUpperCase().padStart(padBy, "0")}
