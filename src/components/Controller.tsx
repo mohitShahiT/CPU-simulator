@@ -27,8 +27,15 @@ const createAsyncStep = function (
 };
 
 const Controller: React.FC = function () {
-  const { isPlaying, setIsPlaying, numBase, setNumBase, speed, setSpeed } =
-    useSimulation();
+  const {
+    isPlaying,
+    setIsPlaying,
+    numBase,
+    setNumBase,
+    speed,
+    setSpeed,
+    setIsProgramListOpen,
+  } = useSimulation();
   const { setLineStatus } = useBus();
   const numberBaseOptions: NumberBaseOption[] = [
     { value: NumberBase.Binary, label: "BIN" },
@@ -147,13 +154,13 @@ const Controller: React.FC = function () {
     if (instruction[0] === "0") {
       //memory reference
       console.log("is memory reference");
-      // await createAsyncStep(() => {
-      setLineStatus((prevStatus) => ({
-        ...prevStatus,
-        CommonBus: true,
-        IRLine: true,
-      }));
-      // }, delay);
+      await createAsyncStep(() => {
+        setLineStatus((prevStatus) => ({
+          ...prevStatus,
+          CommonBus: true,
+          IRLine: true,
+        }));
+      }, delay);
 
       await createAsyncStep(() => {
         ARRef.current = parseInt(address, 2);
@@ -619,6 +626,13 @@ const Controller: React.FC = function () {
         className="border px-3 py-2 rounded-sm text-white"
       >
         Load
+      </button>
+      <button
+        disabled={isPlaying}
+        onClick={() => setIsProgramListOpen(true)}
+        className="border px-3 py-2 rounded-sm text-white"
+      >
+        Programs
       </button>
     </nav>
   );

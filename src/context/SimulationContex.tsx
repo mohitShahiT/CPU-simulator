@@ -3,12 +3,14 @@ import { NumberBase } from "../utils/enums";
 
 
 interface SimulationContextPrpos {
-    isPlaying: boolean;
-    numBase: NumberBase;
-    speed: number
-    setIsPlaying: (value:boolean | ((prev:boolean) => boolean)) => void;
-    setNumBase: (value: NumberBase) => void
-    setSpeed: (value:number)=>void
+  isPlaying: boolean;
+  numBase: NumberBase;
+  speed: number;
+  isProgramListOpen: boolean;
+  setIsPlaying: (value: boolean | ((prev: boolean) => boolean)) => void;
+  setNumBase: (value: NumberBase) => void;
+  setSpeed: (value: number) => void;
+  setIsProgramListOpen: (valie: boolean) => void;
 }
 
 const SimulationContext = createContext<SimulationContextPrpos | null>(null)
@@ -17,14 +19,25 @@ export const SimulationProvider:React.FC<{children: React.ReactNode}> = function
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
     const [speed, setSpeed] = useState<number>(1.5);
     const [numBase, setNumBase] = useState<NumberBase>(NumberBase.Binary)
-
+    const [isProgramListOpen, setIsProgramListOpen] = useState<boolean>(false);
 
 
     return (
-        <SimulationContext.Provider value={{isPlaying, numBase,speed, setIsPlaying, setNumBase,setSpeed}}>
-            {children}
-        </SimulationContext.Provider>
-    )
+      <SimulationContext.Provider
+        value={{
+          isPlaying,
+          numBase,
+          speed,
+          isProgramListOpen,
+          setIsPlaying,
+          setNumBase,
+          setSpeed,
+          setIsProgramListOpen,
+        }}
+      >
+        {children}
+      </SimulationContext.Provider>
+    );
 }
 
 
