@@ -5,6 +5,9 @@ import RAM from "./components/RAM";
 import CPU from "./components/CPU";
 import Bus from "./components/Bus";
 import { useSimulation } from "./context/SimulationContex";
+import { programs } from "./utils/programs";
+import { useRAM } from "./context/RAMContext";
+import { useCPU } from "./context/CPUContext";
 
 const App: React.FC = function () {
   return (
@@ -18,12 +21,14 @@ const App: React.FC = function () {
 
 const Main: React.FC = function () {
   const { isProgramListOpen, setIsProgramListOpen } = useSimulation();
+  const { addressContents, setAddressContents } = useRAM();
+  const { resetRegisters } = useCPU();
   return (
     // <div className="flex py-4 p justify-between relative mx-40">
     <>
       {isProgramListOpen && (
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 backdrop-blur-sm z-40"
           onClick={() => setIsProgramListOpen(false)}
         ></div>
       )}
@@ -42,11 +47,26 @@ const Main: React.FC = function () {
             <h1 className="text-3xl text-center text-green-300">
               Choose a program to load into the memory
             </h1>
-            <div className="p-5">
-              <div className="text-white">
-                Add two numbers stored in memory and store the result back in
-                the memory
-              </div>
+
+            <div className="flex flex-col p-5 gap-2">
+              {programs.map((program) => (
+                <div className="text-white flex items-center justify-between">
+                  <p>{program.description}</p>
+                  <button
+                    className="p-2 border-2"
+                    onClick={() => {
+                      setAddressContents({
+                        ...addressContents,
+                        ...program.program,
+                      });
+                      setIsProgramListOpen(false);
+                      resetRegisters();
+                    }}
+                  >
+                    Load
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}

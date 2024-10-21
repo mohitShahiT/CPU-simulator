@@ -1,4 +1,10 @@
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  MutableRefObject,
+} from "react";
 
 interface CPUProviderProps {
   children: React.ReactNode;
@@ -19,6 +25,10 @@ interface CPUContxtPrpos {
   operation: string;
   flags: FlagInterface;
   activeReg: string;
+  PCRef: MutableRefObject<number>;
+  ARRef: MutableRefObject<number>;
+  DRRef: MutableRefObject<number>;
+  ACRef: MutableRefObject<number>;
   setPC: (value: number | ((prevValue: number) => number)) => void;
   setAC: (value: number) => void;
   setDR: (value: number) => void;
@@ -29,6 +39,7 @@ interface CPUContxtPrpos {
   setOperation: (value: string) => void;
   setFlags: (updater: (prev: FlagInterface) => FlagInterface) => void;
   setActiveReg: (value: string) => void;
+  resetRegisters: () => void;
 }
 
 const CPUContext = createContext<CPUContxtPrpos | null>(null);
@@ -50,6 +61,25 @@ export const CPUProvider: React.FC<CPUProviderProps> = function ({ children }) {
     C: false,
   });
 
+  const PCRef = useRef<number>(0);
+  const ARRef = useRef<number>(0);
+  const DRRef = useRef<number>(0);
+  const ACRef = useRef<number>(0);
+
+  function resetRegisters() {
+    setPC(0);
+    setAC(0);
+    setDR(0);
+    setReg1(0);
+    setReg2(0);
+    setAR(0);
+    setIR(0);
+    PCRef.current = 0;
+    ARRef.current = 0;
+    DRRef.current = 0;
+    ACRef.current = 0;
+  }
+
   return (
     <CPUContext.Provider
       value={{
@@ -63,6 +93,10 @@ export const CPUProvider: React.FC<CPUProviderProps> = function ({ children }) {
         operation,
         flags,
         activeReg,
+        PCRef,
+        ARRef,
+        DRRef,
+        ACRef,
         setPC,
         setAC,
         setDR,
@@ -73,6 +107,7 @@ export const CPUProvider: React.FC<CPUProviderProps> = function ({ children }) {
         setOperation,
         setFlags,
         setActiveReg,
+        resetRegisters,
       }}
     >
       {children}

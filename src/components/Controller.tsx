@@ -1,5 +1,5 @@
 import { CiPlay1, CiPause1 } from "react-icons/ci";
-import React, { useRef } from "react";
+import React from "react";
 import { useSimulation } from "../context/SimulationContex";
 import { NumberBase } from "../utils/enums";
 import { useCPU } from "../context/CPUContext";
@@ -43,10 +43,10 @@ const Controller: React.FC = function () {
     { value: NumberBase.Decimal, label: "DEC" },
   ];
   const {
-    PC,
-    AC,
-    AR,
-    DR,
+    PCRef,
+    ARRef,
+    DRRef,
+    ACRef,
     setOperation,
     setPC,
     setAR,
@@ -57,10 +57,6 @@ const Controller: React.FC = function () {
     setActiveReg,
   } = useCPU();
   const { addressContents, setAddressContents, setIsMemorySelected } = useRAM();
-  const PCRef = useRef(PC);
-  const ARRef = useRef(AR);
-  const DRRef = useRef(DR);
-  const ACRef = useRef(AC);
   const delay = interval / speed;
 
   const fetch = async function () {
@@ -107,13 +103,9 @@ const Controller: React.FC = function () {
       }));
       setIR(parseInt(addressContents[PCRef.current], 2));
       PCRef.current = (PCRef.current + 1) % (MAX_MEMORY_ADDRESS + 1); // Update the ref value
-      // setPC((prevPC) => {
-      //   const newPC = (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1);
-      //   PCRef.current = newPC; // Update the ref value
-      //   return newPC;
-      // });
       setPC(PCRef.current);
       setActiveReg("PC");
+      setActiveReg("IR");
     }, delay);
 
     // deactivate all the lines
@@ -286,6 +278,9 @@ const Controller: React.FC = function () {
           // ACRef.current = DRRef.current + ACRef.current;
           // setAC(ACRef.current);
         });
+        await createAsyncStep(() => {
+          setActiveReg("");
+        }, delay);
         break;
       }
       case "AND": {
@@ -293,7 +288,11 @@ const Controller: React.FC = function () {
         memoryToCPUOpearation(operation, () => {
           ACRef.current = DRRef.current & ACRef.current;
           setAC(ACRef.current);
+          setActiveReg("AC");
         });
+        await createAsyncStep(() => {
+          setActiveReg("");
+        }, delay);
         break;
       }
       case "LDA": {
@@ -304,7 +303,11 @@ const Controller: React.FC = function () {
           }));
           ACRef.current = DRRef.current;
           setAC(ACRef.current);
+          setActiveReg("AC");
         });
+        await createAsyncStep(() => {
+          setActiveReg("");
+        }, delay);
         break;
       }
       case "STA": {
@@ -357,9 +360,11 @@ const Controller: React.FC = function () {
           }));
           PCRef.current = ARRef.current;
           setPC(PCRef.current);
+          setActiveReg("PC");
         }, delay);
 
         await createAsyncStep(() => {
+          setActiveReg("");
           setLineStatus((prevStatus) => ({
             ...prevStatus,
             PCLine: false,
@@ -368,8 +373,12 @@ const Controller: React.FC = function () {
           }));
           PCRef.current = ARRef.current;
           setPC(PCRef.current);
+          setActiveReg("PC");
         }, delay);
 
+        await createAsyncStep(() => {
+          setActiveReg("");
+        }, delay);
         break;
       }
       case "BSA": {
@@ -412,9 +421,11 @@ const Controller: React.FC = function () {
           }));
           ARRef.current++;
           setAR(ARRef.current);
+          setActiveReg("AR");
         }, delay);
 
         await createAsyncStep(() => {
+          setActiveReg("");
           setLineStatus((prevStatus) => ({
             ...prevStatus,
             ARLine: true,
@@ -429,9 +440,11 @@ const Controller: React.FC = function () {
           }));
           PCRef.current = ARRef.current;
           setPC(PCRef.current);
+          setActiveReg("PC");
         }, delay);
 
         await createAsyncStep(() => {
+          setActiveReg("");
           setLineStatus((prevStatus) => ({
             ...prevStatus,
             ARLine: false,
@@ -461,8 +474,11 @@ const Controller: React.FC = function () {
           }));
           DRRef.current = parseInt(addressContents[ARRef.current], 2);
           setDR(DRRef.current);
+          setActiveReg("DR");
         }, delay);
         await createAsyncStep(() => {
+          setActiveReg("");
+
           setIsMemorySelected(false);
           setLineStatus((prevStatus) => ({
             ...prevStatus,
@@ -478,8 +494,10 @@ const Controller: React.FC = function () {
         await createAsyncStep(() => {
           DRRef.current = (DRRef.current + 1) % 256;
           setDR(DRRef.current);
+          setActiveReg("DR");
         }, delay);
         await createAsyncStep(() => {
+          setActiveReg("");
           setIsMemorySelected(true);
           setLineStatus((prevStatus) => ({
             ...prevStatus,
@@ -520,6 +538,10 @@ const Controller: React.FC = function () {
           await createAsyncStep(() => {
             PCRef.current++;
             setPC(PCRef.current);
+            setActiveReg("PC");
+          }, delay);
+          await createAsyncStep(() => {
+            setActiveReg("");
           }, delay);
         }
 
@@ -581,19 +603,6 @@ const Controller: React.FC = function () {
     setPC((prevPC) => (prevPC + 1) % (MAX_MEMORY_ADDRESS + 1));
   };
 
-  const handleLoadProgram = function () {
-    setAddressContents({
-      ...addressContents,
-      0: "00101101",
-      1: "00001110",
-      2: "00111111",
-      3: "11111111",
-      4: "11110000",
-      13: "00000010",
-      14: "00000011",
-    });
-  };
-
   const handleSpeedChange = function (e: React.ChangeEvent<HTMLSelectElement>) {
     setSpeed(Number(e.target.value));
   };
@@ -620,13 +629,6 @@ const Controller: React.FC = function () {
           </option>
         ))}
       </select>
-      <button
-        disabled={isPlaying}
-        onClick={handleLoadProgram}
-        className="border px-3 py-2 rounded-sm text-white"
-      >
-        Load
-      </button>
       <button
         disabled={isPlaying}
         onClick={() => setIsProgramListOpen(true)}
